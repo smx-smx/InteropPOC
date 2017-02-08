@@ -60,7 +60,7 @@ namespace Interop
             if (type == typeof(int))
                 w.Write("int");
             else if (type == typeof(string))
-                w.Write("wchar_t * ");
+                w.Write("const wchar_t * ");
             else if (type.IsEnum)
                 w.Write(type.Name);
             else

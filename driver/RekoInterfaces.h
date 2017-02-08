@@ -63,8 +63,8 @@ enum DataTypeEnum {
 class IFactory : public IUnknown {
 public:
     virtual void STDAPICALLTYPE Const(DataTypeEnum dt, int c) = 0;
-    virtual void STDAPICALLTYPE Reg(DataTypeEnum dt, wchar_t *name, int number) = 0;
-    virtual void STDAPICALLTYPE FlagGroup(wchar_t *name, int regNumber, int flagMask) = 0;
+    virtual void STDAPICALLTYPE Reg(DataTypeEnum dt, const wchar_t *name, int number) = 0;
+    virtual void STDAPICALLTYPE FlagGroup(const wchar_t *name, int regNumber, int flagMask) = 0;
     virtual void STDAPICALLTYPE Bin(PrimitiveOp op) = 0;
     virtual void STDAPICALLTYPE Unary(PrimitiveOp op) = 0;
     virtual void STDAPICALLTYPE Mem(DataTypeEnum dt) = 0;

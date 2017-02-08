@@ -16,8 +16,13 @@ set(MONO_BUILD_FLAGS "${MONO_BUILD_FLAGS}=${MONO_BUILD_TYPE}")
 
 add_library(driver SHARED driver/driver.cpp)
 
+add_custom_target(
+	xbuild ALL
+	DEPENDS Interop.sln
+)
+
 add_custom_command(
-	TARGET driver
+	TARGET xbuild
 	PRE_BUILD
 	COMMAND xbuild ${MONO_BUILD_FLAGS}
 )
@@ -25,5 +30,5 @@ add_custom_command(
 add_custom_command(
 	TARGET driver
 	POST_BUILD
-	COMMAND ln -s $<TARGET_FILE:driver> bin/${MONO_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
+	COMMAND ln -sf $<TARGET_FILE:driver> bin/${MONO_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
 )

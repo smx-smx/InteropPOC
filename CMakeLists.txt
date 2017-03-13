@@ -22,7 +22,6 @@ llvm_map_components_to_libnames(llvm_libs
 	xcoredisassembler
 )
 
-
 if( NOT CMAKE_BUILD_TYPE )
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
@@ -38,7 +37,10 @@ set(MONO_BUILD_FLAGS "${MONO_BUILD_FLAGS}=${MONO_BUILD_TYPE}")
 
 
 
-add_library(driver SHARED driver/driver.cpp)
+add_library(driver SHARED
+    driver/driver.cpp
+    driver/Reko.cpp
+)
 target_link_libraries(driver ${llvm_libs})
 
 

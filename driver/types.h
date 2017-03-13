@@ -2,11 +2,10 @@
 #define __TYPES_H
 
 #ifdef _WINDOWS
-
 #include <objbase.h>
-
+#define EXPORT __declspec(dllexport) __cdecl
 #else
-
+#define EXPORT extern
 #define STDAPICALLTYPE
 
 typedef unsigned long UINT;

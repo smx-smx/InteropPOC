@@ -146,7 +146,7 @@ void SendMCInst(const MCInst &instr){
 
 extern "C"
 {	
-	EXPORT void Disasm(uint8_t *pData, uint64_t PC, size_t dataSize){
+	EXPORT void Disasm(uint64_t PC, uint8_t *pData, size_t dataSize){
 		size_t remaining = dataSize;
 		ArrayRef<uint8_t> Bytes(pData, dataSize);
 		while(remaining > 0){

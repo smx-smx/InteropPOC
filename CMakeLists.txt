@@ -44,19 +44,21 @@ add_library(driver SHARED
 target_link_libraries(driver ${llvm_libs})
 
 
-add_custom_target(
-	xbuild ALL
-	DEPENDS Interop.sln
-)
+if(UNIX AND NOT WIN32)
+	add_custom_target(
+		xbuild ALL
+		DEPENDS Interop.sln
+	)
 
-add_custom_command(
-	TARGET xbuild
-	PRE_BUILD
-	COMMAND xbuild ${MONO_BUILD_FLAGS}
-)
+	add_custom_command(
+		TARGET xbuild
+		PRE_BUILD
+		COMMAND xbuild ${MONO_BUILD_FLAGS}
+	)
 
-add_custom_command(
-	TARGET driver
-	POST_BUILD
-	COMMAND ln -sf $<TARGET_FILE:driver> bin/${MONO_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
-)
+	add_custom_command(
+		TARGET driver
+		POST_BUILD
+		COMMAND ln -sf $<TARGET_FILE:driver> bin/${MONO_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
+	)
+endif()

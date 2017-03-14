@@ -1,6 +1,6 @@
 #pragma once
-
-// These interfaces and enumerations are genereated by CppHeaderGenerator.cs
+#include <stdint.h>
+#include "types.h"
 
 enum PrimitiveOp {
     Not = 0,
@@ -59,20 +59,12 @@ enum DataTypeEnum {
     Ptr64 = 18,
 };
 
-
 class IFactory : public IUnknown {
 public:
-    virtual void STDAPICALLTYPE Const(DataTypeEnum dt, int c) = 0;
-    virtual void STDAPICALLTYPE Reg(DataTypeEnum dt, const wchar_t *name, int number) = 0;
-    virtual void STDAPICALLTYPE FlagGroup(const wchar_t *name, int regNumber, int flagMask) = 0;
-    virtual void STDAPICALLTYPE Bin(PrimitiveOp op) = 0;
-    virtual void STDAPICALLTYPE Unary(PrimitiveOp op) = 0;
-    virtual void STDAPICALLTYPE Mem(DataTypeEnum dt) = 0;
-    virtual void STDAPICALLTYPE Apply() = 0;
-    virtual void STDAPICALLTYPE Assign() = 0;
-    virtual void STDAPICALLTYPE Call() = 0;
-    virtual void STDAPICALLTYPE SideEffect() = 0;
-    virtual void STDAPICALLTYPE If() = 0;
-    virtual void STDAPICALLTYPE Goto() = 0;
+    virtual void STDAPICALLTYPE Send(uint32_t message, unsigned char* data, uint32_t size) = 0;
+    virtual void STDAPICALLTYPE Send(uint32_t message, unsigned char data) = 0;
+    virtual void STDAPICALLTYPE Send(uint32_t message, uint32_t data) = 0;
+    virtual void STDAPICALLTYPE Send(uint32_t message, uint64_t data) = 0;
 };
 
+extern IFactory *f;

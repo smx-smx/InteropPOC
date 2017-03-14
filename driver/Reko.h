@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "RekoInterfaces.h"
 using namespace std;
 
 template <typename E>
@@ -19,11 +20,21 @@ public:
 	virtual ~Reko();
 	
 	static int Send(unsigned message, void *data, size_t size){	
+		f->Send(message, (unsigned char *)data, size);
+		return 0;
 	};
-	
 	static int Send(unsigned message){
 		return Send(message, NULL, 0);
-	}
+	};
+	static int Send(unsigned message, unsigned int data){
+		return Send(message, (void *)&data, sizeof(data));
+	};
+	static int Send(unsigned message, unsigned long int data){
+		return Send(message, (void *)&data, sizeof(data));
+	};
+	static int Send(unsigned message, unsigned long long int data){
+		return Send(message, (void *)&data, sizeof(data));
+	};
 	static int Send(unsigned message, uint8_t data){
 		return Send(message, (void *)&data, sizeof(data));
 	};
@@ -34,24 +45,19 @@ public:
 	static int Send(unsigned message, uint16_t data){
 		return Send(message, (void *)&data, sizeof(data));
 	};
-	static int Send(unsigned message, uint32_t data){
-		return Send(message, (void *)&data, sizeof(data));
-	};
-	static int Send(unsigned message, uint64_t data){
-		return Send(message, (void *)&data, sizeof(data));
-	}
 	static int Send(unsigned message, char *data){
 		return Send(message, (void *)data, strlen(data) + 1);
-	}
+	};
 	static int Send(unsigned message, string data){
-		return Send(message, data.c_str());
-	}
+		const char *str = data.c_str();
+		return Send(message, (void *)str, data.size() + 1);
+	};
 	static int Send(unsigned message, float data){
 		return Send(message, (void *)&data, sizeof(data));
-	}
+	};
 	static int Send(unsigned message, double data){
 		return Send(message, (void *)&data, sizeof(data));
-	}
+	};
 private:
 
 };

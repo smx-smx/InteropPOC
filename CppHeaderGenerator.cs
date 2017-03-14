@@ -12,7 +12,11 @@ namespace Interop
     {
         public void Generate(string [] types, TextWriter w)
         {
-            foreach (var t in types)
+			w.WriteLine("#pragma once");
+			w.WriteLine("#include <stdint.h>");
+			w.WriteLine();
+
+			foreach (var t in types)
             {
                 var type = Type.GetType(t);
                 if (type == null)
@@ -40,6 +44,8 @@ namespace Interop
             }
             w.WriteLine("};");
             w.WriteLine();
+
+			w.WriteLine("extern {0} *f;", itf.Name);
         }
 
         private void GenerateArgs(MethodInfo method, TextWriter w)
@@ -57,14 +63,36 @@ namespace Interop
 
         private void WriteParameterType(Type type, TextWriter w)
         {
-            if (type == typeof(int))
-                w.Write("int");
-            else if (type == typeof(string))
-                w.Write("const wchar_t * ");
-            else if (type.IsEnum)
-                w.Write(type.Name);
-            else
-                w.Write("??unknown??");
+			Type elementType = type.GetElementType();
+			Type parameterType = type;
+			if (type.IsArray) {
+				type = elementType;
+			}
+
+			if (type == typeof(UInt16))
+				w.Write("uint16_t");
+			else if (type == typeof(UInt32))
+				w.Write("uint32_t");
+			else if (type == typeof(UInt64))
+				w.Write("uint64_t");
+			else if (type == typeof(int))
+				w.Write("int");
+			else if (type == typeof(uint))
+				w.Write("unsigned int");
+			else if (type == typeof(byte))
+				w.Write("unsigned char");
+			else if (type == typeof(ulong))
+				w.Write("unsigned long");
+			else if (type == typeof(string))
+				w.Write("const wchar_t * ");
+			else if (type.IsEnum)
+				w.Write(type.Name);
+			else
+				w.Write("??unknown??");
+
+			if (parameterType.IsArray) {
+				w.Write("*");
+			}
         }
 
         private void GenerateEnum(Type enumeration, TextWriter w)

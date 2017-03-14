@@ -14,18 +14,57 @@
 using namespace std;
 using namespace llvm;
 
+IFactory *f;
+
 MCInstance::MCInstance(Triple Triple){
 	//TODO: Error Checking?
 	this->TT = Triple;
 	this->TheTarget = TargetRegistry::lookupTarget(this->TT.getTriple(), this->LastError);
+	if(!this->TheTarget){
+		cerr << "Target Lookup failed!" << endl;
+		cerr << this->LastError << endl;
+		throw "";
+	}
 	this->RegInfo = this->TheTarget->createMCRegInfo(this->TT.getTriple());	
+	if(!this->RegInfo){
+		cerr << "createMCRegInfo failed!" << endl;
+		throw "";
+	}
 	this->AsmInfo = this->TheTarget->createMCAsmInfo(*this->RegInfo, this->TT.getTriple());
+	if(!this->AsmInfo){
+		cerr << "createMCAsmInfo failed!" << endl;
+		throw "";
+	}
 	this->InstrInfo = this->TheTarget->createMCInstrInfo();
+	if(!this->InstrInfo){
+		cerr << "createMCInstrInfo failed!" << endl;
+		throw "";
+	}
 	this->SubInfo = this->TheTarget->createMCSubtargetInfo(this->TT.getTriple(), this->CPU, this->FeatureStr);
+	if(!this->SubInfo){
+		cerr << "createMCSubtargetInfo failed!" << endl;
+		throw "";
+	}
 	this->MCCtx = new MCContext(this->AsmInfo, this->RegInfo, 0);
+	if(!this->MCCtx){
+		cerr << "Cannot create MCContext!" << endl;
+		throw "";
+	}
 	this->DisAsm = this->TheTarget->createMCDisassembler(*this->SubInfo, *this->MCCtx);
+	if(!this->DisAsm){
+		cerr << "createMCDisassembler failed!" << endl;
+		throw "";
+	}
 	this->RelInfo = this->TheTarget->createMCRelocationInfo(this->TT.getTriple(), *this->MCCtx);
+	if(!this->RelInfo){
+		cerr << "createMCRelocationInfo failed!" << endl;
+		throw "";
+	}
 	this->InstPrinter = this->TheTarget->createMCInstPrinter(this->TT, this->AsmInfo->getAssemblerDialect(), *this->AsmInfo, *this->InstrInfo, *this->RegInfo);
+	if(!this->InstPrinter){
+		cerr << "createMCInstPrinter failed!" << endl;
+		throw "";
+	}
 }
 MCInstance::MCInstance(string TargetName) : MCInstance(Triple(TargetName)){}
 static MCInstance *Ctx;
@@ -36,13 +75,6 @@ void SendMCAsmInfo();
 void SendSubTargetInfo();
 void SendMCInst(const MCInst& inst);
 void SendMCOperand(const MCOperand& opnd);
-
-EXPORT void SetupTarget(const char *TripleName){
-	if(Ctx)
-		delete Ctx;
-
-	Ctx = new MCInstance(Triple(TripleName));
-}
 
 void SendSubTargetInfo(){
 	Reko::Send(MSG_SUBTGT_START);
@@ -79,7 +111,7 @@ void SendMCRegInfo(){
 
 void SendMCInstrInfo(){
 	for(unsigned int i=0; i<Ctx->InstrInfo->getNumOpcodes(); i++){
-		const char *OpName = Ctx->InstrInfo->getName(i);
+		string OpName = Ctx->InstrInfo->getName(i).str();
 		const MCInstrDesc &desc = Ctx->InstrInfo->get(i);
 		const MCOperandInfo *opinfo = desc.OpInfo;
 
@@ -146,13 +178,34 @@ void SendMCInst(const MCInst &instr){
 
 extern "C"
 {	
+	EXPORT void Initialize(IFactory *f){
+		::f = f;
+	}
+
+	EXPORT void SetupTarget(const char *TripleName){
+		InitializeAllTargetInfos();
+		InitializeAllTargets();
+		InitializeAllTargetMCs();
+		InitializeAllDisassemblers();
+		InitializeAllAsmParsers();
+		InitializeAllAsmPrinters();
+		
+		if(Ctx){
+			delete Ctx;
+		}
+
+		Ctx = new MCInstance(Triple(TripleName));
+	}
+
 	EXPORT void Disasm(uint64_t PC, uint8_t *pData, size_t dataSize){
 		size_t remaining = dataSize;
 		ArrayRef<uint8_t> Bytes(pData, dataSize);
 		while(remaining > 0){
+			cout << "Loop with " << remaining << endl;
 			MCInst instr;
-			size_t instrSz;
-			MCDisassembler::DecodeStatus result = Ctx->DisAsm->getInstruction(instr, instrSz, Bytes, PC, outs(), outs());
+			uint64_t instrSz = 0;
+			//MCDisassembler::DecodeStatus result = Ctx->DisAsm->getInstruction(instr, instrSz, Bytes, PC, outs(), outs());
+			MCDisassembler::DecodeStatus result = Ctx->DisAsm->getInstruction(instr, instrSz, Bytes, 0, nulls(), nulls());
 			switch(result){
 				case MCDisassembler::Success:
 					remaining -= instrSz;
@@ -163,20 +216,5 @@ extern "C"
 					break;
 			}
 		}
-	}
-	
-	EXPORT void	Build(
-		IFactory * f,
-		unsigned long long uAddr, 
-		unsigned const char *pBytes,
-		int offset
-    ){
-		int word = *reinterpret_cast<const int *>(pBytes + offset);
-		
-		f->Reg(DataTypeEnum::Word32, L"eax", 0);
-		f->Const(DataTypeEnum::Word32, word);
-		f->Bin(PrimitiveOp::IAdd);
-		f->Reg(DataTypeEnum::Word32, L"ecx", 1);
-		f->Assign();
 	}
 }

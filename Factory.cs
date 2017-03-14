@@ -7,6 +7,78 @@ using System.Windows.Forms;
 
 namespace Interop
 {
+	public enum RekoMsg
+	{
+		/** Instruction **/
+		MSG_INSN_START,
+		MSG_INSN_NUM,
+		MSG_INSN_NAME,
+		MSG_INSN_OPND_NUM,
+		MSG_INSN_OPCODE,
+		MSG_INSN_SIZE,
+		MSG_INSN_OPND_TYPE,
+		MSG_INSN_END,
+
+		/** Registers **/
+		MSG_REG_START,
+		MSG_REG_NAME,
+		MSG_REG_END,
+
+		/** Asm Info **/
+		MSG_ASMINFO_START,
+		MSG_ASMINFO_POINTERSIZE,
+		MSG_ASMINFO_MAXINSTLEN,
+		MSG_ASMINFO_MININSTALIGN,
+		MSG_ASMINFO_END,
+
+		/** Subtarget Info **/
+		MSG_SUBTGT_START,
+		MSG_SUBTGT_CPUNAME,
+		MSG_SUBTGT_FEATURES,
+		MSG_SUBTGT_END,
+
+		/** Register Classes */
+		MSG_REGCLASS_START,
+		MSG_REGCLASS_ALIGNMENT,
+		MSG_REGCLASS_SETSIZE,
+		MSG_REGCLASS_SIZE,
+		MSG_REGCLASS_END,
+
+		/** Opcode **/
+		MSG_OP_START,
+		MSG_OP_OPCODE,
+		MSG_OP_SIZE,
+		MSG_OP_OPND_NUM,
+		MSG_OP_END,
+
+		/** Operand **/
+		MSG_OPND_START,
+		MSG_OPND_VALID,
+		//MSG_OPND_TYPE,
+
+		MSG_OPND_EXPR_START,
+		MSG_OPND_EXPR_KIND,
+		MSG_OPND_EXPR_ABSVALUE,
+		MSG_OPND_EXPR_VALUE,
+		MSG_OPND_EXPR_END,
+
+		MSG_OPND_FPIMM_START,
+		MSG_OPND_FPIMM_VALUE,
+		MSG_OPND_FPIMM_END,
+
+		MSG_OPND_IMM_START,
+		MSG_OPND_IMM_VALUE,
+		MSG_OPND_IMM_END,
+
+		MSG_OPND_INSN_START,
+		MSG_OPND_INSN_END,
+
+		MSG_OPND_REG_START,
+		MSG_OPND_REG_NUM,
+		MSG_OPND_REG_END,
+
+		MSG_OPND_END
+	}
     public enum PrimitiveOp
     {
         Not,        // C/C++ !
@@ -81,49 +153,11 @@ namespace Interop
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IFactory
     {
-        // Expressions.
-
-        /// <summary>
-        /// Pushes a constant expression on the stack.
-        /// </summary>
-        /// <param name="c"></param>
-        void Const(DataTypeEnum dt, int c);
-
-        /// <summary>
-        /// Push a register on the stack.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="number"></param>
-        void Reg(DataTypeEnum dt, [MarshalAs(UnmanagedType.LPWStr)] string name, int number);
-
-        void FlagGroup([MarshalAs(UnmanagedType.LPWStr)] string name, int regNumber, int flagMask); 
-
-        /// <summary>
-        /// Pops the top two entries in the factory stack, builds a binary operation,
-        /// and pushes the resulting expression on the stack.
-        /// </summary>
-        /// <param name="op"></param>
-        void Bin(PrimitiveOp op);
-
-        void Unary(PrimitiveOp op);
-
-        /// <summary>
-        /// Pops the top of the stack and uses it as the effective address
-        /// of a memory derefence. The parameter 'dt' is the datatype of the
-        /// memory access.
-        /// </summary>
-        /// <param name="dt"></param>
-        void Mem(DataTypeEnum dt);
-
-        void Apply();
-
-        // Statements.
-        void Assign();
-        void Call();
-        void SideEffect();
-        void If();
-        void Goto();
-    }
+		void Send(uint message, IntPtr pData, uint size);
+		void Send(uint message, byte data);
+		void Send(uint message, UInt32 data);
+		void Send(uint message, UInt64 data);
+	}
 
     [ComVisible(true)]
     [ClassInterface(ClassInterfaceType.None)]
@@ -138,69 +172,19 @@ namespace Interop
             this.stmts = new List<Stmt>();
         }
 
-        public void Assign()
-        {
-            var dst = stack.Pop();
-            var src = stack.Pop();
-            stmts.Add(new Assign(dst, src));
-        }
-
-        public void Const(DataTypeEnum dt, int c)
-        {
-            stack.Push(new Const(dt, c));
-        }
-
-        public void Reg(DataTypeEnum dt, string name, int reg)
-        {
-            stack.Push(new Id(dt, name, reg));
-        }
-
-        public void FlagGroup([MarshalAs(UnmanagedType.LPWStr)] string name, int regNumber, int flagMask)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Mem(DataTypeEnum dt)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Bin(PrimitiveOp op)
-        {
-            var right = stack.Pop();
-            var left = stack.Pop();
-            stack.Push(new BinOp(op, left, right));
-        }
-
-        public void Unary(PrimitiveOp op)
-        {
-            var exp = stack.Pop();
-            stack.Push(new Unary(op, exp));
-        }
-
-        public void Apply()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Call()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SideEffect()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void If()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Goto()
-        {
-            throw new NotImplementedException();
-        }
+		public void Send(uint message, IntPtr pData, uint size) {
+			byte[] data = new byte[size];
+			Marshal.Copy(pData, data, 0, (int)size);
+			Console.WriteLine("Received Message {0}", Enum.GetName(typeof(RekoMsg), message));
+		}
+		public void Send(uint message, byte data) {
+			Console.WriteLine("Received byte");
+		}
+		public void Send(uint message, UInt32 data) {
+			Console.WriteLine("Received dword");
+		}
+		public void Send(uint message, UInt64 data) {
+			Console.WriteLine("Received qword");
+		}
     }
 }

@@ -17,7 +17,6 @@ using namespace llvm;
 IFactory *f;
 
 MCInstance::MCInstance(Triple Triple){
-	//TODO: Error Checking?
 	this->TT = Triple;
 	this->TheTarget = TargetRegistry::lookupTarget(this->TT.getTriple(), this->LastError);
 	if(!this->TheTarget){

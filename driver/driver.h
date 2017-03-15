@@ -57,11 +57,5 @@ public:
 	}
 };
 
-typedef enum {
-	R_OP_NUM = 0,
-	R_OP_NAME,
-	R_OP_NUMOPND,
-} REKO_OP;
-
 #endif /* DRIVER_H */
 

@@ -177,7 +177,6 @@ namespace Interop
 			if (size > 0) {
 				byte[] data = new byte[size];
 				Marshal.Copy(pData, data, 0, (int)size);
-				Console.WriteLine(Utils.HexDump(data));
 			}
 		}
 		public void Send(uint message, byte data) {

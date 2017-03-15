@@ -1,42 +1,15 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.6)
 project(InteropPOC)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(LLVM REQUIRED CONFIG)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-
-llvm_map_components_to_libnames(llvm_libs
-	aarch64disassembler
-	armdisassembler
-	hexagondisassembler
-	mcdisassembler
-	mipsdisassembler
-	powerpcdisassembler
-	sparcdisassembler
-	systemzdisassembler
-	x86disassembler
-	xcoredisassembler
-)
+if(USE_LLVM_SHARED)
+	include("llvm_shared.cmake")
+endif(USE_LLVM_SHARED)
 
 if( NOT CMAKE_BUILD_TYPE )
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
-
-set(MONO_BUILD_FLAGS Interop.sln /p:Configuration)
-set(MONO_BUILD_TYPE "Debug")
-
-if( CMAKE_BUILD_TYPE EQUAL "RELEASE" )
-	set(MONO_BUILD_TYPE "Release")
-endif()
-
-set(MONO_BUILD_FLAGS "${MONO_BUILD_FLAGS}=${MONO_BUILD_TYPE}")
-
 
 set(sources "")
 list(APPEND sources
@@ -44,28 +17,47 @@ list(APPEND sources
 	driver/Reko.cpp
 )
 if(WIN32)
-	list(APPEND sources driver/dllmain.cpp)
+    list(APPEND sources driver/dllmain.cpp)
 endif(WIN32)
-add_library(driver SHARED ${sources})
 
+add_library(driver SHARED ${sources})
 target_link_libraries(driver ${llvm_libs})
 
+add_definitions("-fno-rtti")
 
-if(UNIX AND NOT WIN32)
+set(CSHARP_BUILD_FLAGS //m //p:Configuration=${CMAKE_BUILD_TYPE})
+if(WIN32)
+	get_filename_component(msbuildcmd
+		"[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\4.0;MSBuildToolsPath]"
+		ABSOLUTE CACHE
+	)
+	set(msbuildcmd "${msbuildcmd}/msbuild.exe")
+
+	add_custom_target(
+		msbuild ALL
+		DEPENDS Interop.sln
+	)
+	add_custom_command(
+		TARGET msbuild
+		PRE_BUILD
+		COMMAND ${msbuildcmd}
+		ARGS ${CSHARP_BUILD_FLAGS} Interop.sln
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	)
+elseif(UNIX)
 	add_custom_target(
 		xbuild ALL
 		DEPENDS Interop.sln
 	)
-
 	add_custom_command(
 		TARGET xbuild
 		PRE_BUILD
-		COMMAND xbuild ${MONO_BUILD_FLAGS}
-	)
-
-	add_custom_command(
-		TARGET driver
-		POST_BUILD
-		COMMAND ln -sf $<TARGET_FILE:driver> bin/${MONO_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
+		COMMAND xbuild ${CSHARP_BUILD_FLAGS}
 	)
 endif()
+
+add_custom_command(
+	TARGET driver
+	POST_BUILD
+	COMMAND ln -sf $<TARGET_FILE:driver> ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/$<TARGET_FILE_NAME:driver>
+)

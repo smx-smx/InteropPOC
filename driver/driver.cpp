@@ -218,7 +218,7 @@ extern "C"
 					StringRef AnnotationsStr = Annotations.str();
 					Ctx->InstPrinter->printInst(&instr, FormattedOS, AnnotationsStr, *Ctx->SubInfo);
 
-					cout << InsnStr.data() << endl;
+					cout << string(InsnStr.data(), InsnStr.size()) << endl;
 
 					break;
 				} default:

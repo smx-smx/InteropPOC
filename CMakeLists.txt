@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 if(USE_LLVM_SHARED)
 	include("llvm_shared.cmake")
+else()
+	include("llvm_static.cmake")
 endif(USE_LLVM_SHARED)
 
 if( NOT CMAKE_BUILD_TYPE )

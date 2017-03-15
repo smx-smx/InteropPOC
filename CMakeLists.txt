@@ -25,8 +25,6 @@ endif(WIN32)
 add_library(driver SHARED ${sources})
 target_link_libraries(driver ${llvm_libs})
 
-add_definitions("-fno-rtti")
-
 set(CSHARP_BUILD_FLAGS //m //p:Configuration=${CMAKE_BUILD_TYPE})
 if(WIN32)
 	get_filename_component(msbuildcmd

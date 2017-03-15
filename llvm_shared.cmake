@@ -10,7 +10,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 include_directories(BEFORE "${LOCAL_LLVM_PREFIX}/include")
 
 #include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
+add_definitions(${LLVM_DEFINITIONS} "-fno-rtti")
 
 llvm_map_components_to_libnames(llvm_names
 	# Core

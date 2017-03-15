@@ -207,11 +207,21 @@ extern "C"
 			//MCDisassembler::DecodeStatus result = Ctx->DisAsm->getInstruction(instr, instrSz, Bytes, PC, outs(), outs());
 			MCDisassembler::DecodeStatus result = Ctx->DisAsm->getInstruction(instr, instrSz, Bytes, 0, nulls(), nulls());
 			switch(result){
-				case MCDisassembler::Success:
+				case MCDisassembler::Success:{
 					remaining -= instrSz;
 					SendMCInst(instr);
+
+					SmallVector<char, 64> InsnStr;
+					raw_svector_ostream OS(InsnStr);
+					formatted_raw_ostream FormattedOS(OS);
+					raw_svector_ostream Annotations(InsnStr);
+					StringRef AnnotationsStr = Annotations.str();
+					Ctx->InstPrinter->printInst(&instr, FormattedOS, AnnotationsStr, *Ctx->SubInfo);
+
+					cout << InsnStr.data() << endl;
+
 					break;
-				default:
+				} default:
 					cerr << "Instruction decoding failed!" << endl;
 					break;
 			}

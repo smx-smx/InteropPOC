@@ -40,7 +40,7 @@ public:
 	const MCSubtargetInfo *SubInfo;
 	const MCDisassembler *DisAsm;
 	const MCRelocationInfo *RelInfo;
-	const MCInstPrinter *InstPrinter;
+	MCInstPrinter *InstPrinter;
 	MCInstance(Triple Triple);
 	MCInstance(string TargetName);
 	

@@ -38,11 +38,16 @@ endif()
 set(MONO_BUILD_FLAGS "${MONO_BUILD_FLAGS}=${MONO_BUILD_TYPE}")
 
 
-
-add_library(driver SHARED
-    driver/driver.cpp
-    driver/Reko.cpp
+set(sources "")
+list(APPEND sources
+	driver/driver.cpp
+	driver/Reko.cpp
 )
+if(WIN32)
+	list(APPEND sources driver/dllmain.cpp)
+endif(WIN32)
+add_library(driver SHARED ${sources})
+
 target_link_libraries(driver ${llvm_libs})
 
 

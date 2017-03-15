@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.7)
 project(InteropPOC)
 
+set(CMAKE_CXX_STANDARD 14)
+
 find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")

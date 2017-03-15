@@ -13,13 +13,16 @@ constexpr auto to_underlying(E e) noexcept {
     return static_cast<std::underlying_type_t<E>>(e);
 }
 
+extern "C" {
+    EXPORT int RekoSend(unsigned message, void *data, size_t size);
+}
+
 class Reko {
 public:
 	Reko();
 	Reko(const Reko& orig);
 	virtual ~Reko();
-	
-	static int Send(unsigned message, void *data, size_t size){	
+	static int Send(unsigned message, void *data, size_t size){
 		f->Send(message, (unsigned char *)data, size);
 		return 0;
 	};

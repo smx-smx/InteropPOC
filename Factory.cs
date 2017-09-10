@@ -1,6 +1,8 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
@@ -148,6 +150,8 @@ namespace Interop
         Ptr64,
     }
 
+	public delegate void NativeCallback(IntPtr type);
+
     [ComVisible(true)]
     [Guid("E40FFD0D-3019-4ADF-AC48-800F3ACFA360")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -157,6 +161,10 @@ namespace Interop
 		void Send(uint message, byte data);
 		void Send(uint message, UInt32 data);
 		void Send(uint message, UInt64 data);
+		void GetType(
+			[MarshalAs(UnmanagedType.LPWStr)] string typeName,
+			[MarshalAs(UnmanagedType.FunctionPtr)] NativeCallback cb
+		);
 	}
 
     [ComVisible(true)]
@@ -188,5 +196,88 @@ namespace Interop
 		public void Send(uint message, UInt64 data) {
 			Console.WriteLine("Received qword");
 		}
-    }
+
+		[DllImport("driver")]
+		public static extern IntPtr calloc(int num, uint size);
+
+		[DllImport("driver")]
+		public static extern IntPtr memcpy(IntPtr dest, IntPtr src, uint size);
+
+		[DllImport("driver")]
+		public static extern void free(IntPtr mem);
+
+		private object BuildStructType(Type t) {
+			StringBuilder sb = new StringBuilder();
+
+
+			foreach (MemberInfo m in t.GetMembers(BindingFlags.Public)) {
+				sb.AppendFormat("public {0} {1};", m.Name, m.Name);
+				sb.AppendLine();
+			}
+
+			foreach(FieldInfo f in t.GetFields(BindingFlags.Public | BindingFlags.Instance)) {
+				var mt = f.FieldType;
+				sb.AppendFormat("public {0} {1};", mt.Name, f.Name);
+				sb.AppendLine();
+			}
+
+			foreach(PropertyInfo p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+				var mt = p.PropertyType;
+				sb.AppendFormat("public {0} {1};", mt.Name, p.Name);
+				sb.AppendLine();
+			}
+
+			string code = string.Format(@"
+				using System;
+				using System.Runtime.InteropServices;
+				namespace RunTimeCompile
+				{{
+					[StructLayoutAttribute(LayoutKind.Sequential)]
+					public struct {0}
+					{{
+						{1}
+					}}
+				}}
+			", t.Name, sb.ToString());
+
+			var oCodeDomProvider = CodeDomProvider.CreateProvider("CSharp");
+			CompilerParameters oCompilerParameters = new CompilerParameters();
+			oCompilerParameters.ReferencedAssemblies.Add("system.dll");
+			oCompilerParameters.GenerateExecutable = false;
+			oCompilerParameters.GenerateInMemory = true;
+			var oCompilerResults = oCodeDomProvider.CompileAssemblyFromSource(oCompilerParameters, code);
+
+			var oAssembly = oCompilerResults.CompiledAssembly;
+			var oObject = oAssembly.CreateInstance(string.Format("RunTimeCompile.{0}", t.Name));
+			return oObject;
+		}
+
+		private Dictionary<string, object> types = new Dictionary<string, object>();
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="typeName"></param>
+		/// <param name="cb"></param>
+		public void GetType(string typeName, NativeCallback cb) {
+			object obj;
+			if (types.ContainsKey(typeName)) {
+				obj = types[typeName];
+			} else {
+				Type type = Type.GetType(typeName);
+				if (type == null)
+					throw new ArgumentNullException("Can't find type " + typeName);
+
+				obj = BuildStructType(type);
+				types[typeName] = obj;
+			}
+
+			int size = Marshal.SizeOf(obj);
+
+			IntPtr unmanagedAddr = Marshal.AllocHGlobal(size);
+			Marshal.StructureToPtr(obj, unmanagedAddr, false);
+			cb(unmanagedAddr);
+			Marshal.FreeHGlobal(unmanagedAddr);
+		}
+	}
 }

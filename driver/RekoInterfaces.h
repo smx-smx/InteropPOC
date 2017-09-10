@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "types.h"
 
 enum PrimitiveOp {
     Not = 0,
@@ -61,10 +60,11 @@ enum DataTypeEnum {
 
 class IFactory : public IUnknown {
 public:
-    virtual void STDAPICALLTYPE Send(uint32_t message, unsigned char* data, uint32_t size) = 0;
+    virtual void STDAPICALLTYPE Send(uint32_t message, void *pData, uint32_t size) = 0;
     virtual void STDAPICALLTYPE Send(uint32_t message, unsigned char data) = 0;
     virtual void STDAPICALLTYPE Send(uint32_t message, uint32_t data) = 0;
     virtual void STDAPICALLTYPE Send(uint32_t message, uint64_t data) = 0;
+    virtual void STDAPICALLTYPE GetType(const wchar_t *typeName, void (*cb)(void *type)) = 0;
 };
 
 extern IFactory *f;

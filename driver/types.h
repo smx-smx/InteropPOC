@@ -3,9 +3,11 @@
 
 #ifdef _WINDOWS
 #include <objbase.h>
-#define EXPORT __declspec(dllexport) __cdecl
+#define EXPORT(type) __declspec(dllexport) type __cdecl
+#define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
 #else
 #define EXPORT extern
+#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #define STDAPICALLTYPE
 
 typedef unsigned long UINT;

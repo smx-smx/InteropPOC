@@ -14,7 +14,7 @@ constexpr auto to_underlying(E e) noexcept {
 }
 
 extern "C" {
-    EXPORT int RekoSend(unsigned message, void *data, size_t size);
+    EXPORT(int) RekoSend(unsigned message, void *data, size_t size);
 }
 
 class Reko {

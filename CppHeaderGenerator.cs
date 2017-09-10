@@ -8,31 +8,16 @@ using System.Threading.Tasks;
 
 namespace Interop
 {
-    public class CppHeaderGenerator
+    public class CppHeaderGenerator : HeaderGenerator
     {
-        public void Generate(string [] types, TextWriter w)
-        {
+		public CppHeaderGenerator(TextWriter w) : base(w){ }
+
+		public override void EmitHeaderGuardStart(string guard) {
 			w.WriteLine("#pragma once");
-			w.WriteLine("#include <stdint.h>");
-			w.WriteLine();
+		}
 
-			foreach (var t in types)
-            {
-                var type = Type.GetType(t);
-                if (type == null)
-                    continue;
-                if (type.IsInterface)
-                {
-                    GenerateInterface(type, w);
-                } else if (type.IsEnum)
-                {
-                    GenerateEnum(type, w);
-                }
-            }
-        }
-
-        private void GenerateInterface(Type itf, TextWriter w)
-        {
+        public override void GenerateInterface(Type itf)
+        {		
             w.WriteLine("class {0} : public IUnknown {{", itf.Name);
             w.WriteLine("public:");
 
@@ -46,53 +31,6 @@ namespace Interop
             w.WriteLine();
 
 			w.WriteLine("extern {0} *f;", itf.Name);
-        }
-
-        private void GenerateArgs(MethodInfo method, TextWriter w)
-        {
-            var sep = "";
-            foreach (var param in method.GetParameters())
-            {
-                w.Write(sep);
-                sep = ", ";
-                WriteParameterType(param.ParameterType, w);
-                w.Write(" ");
-                w.Write(param.Name);
-            }
-        }
-
-        private void WriteParameterType(Type type, TextWriter w)
-        {
-			Type elementType = type.GetElementType();
-			Type parameterType = type;
-			if (type.IsArray) {
-				type = elementType;
-			}
-
-			if (type == typeof(UInt16))
-				w.Write("uint16_t");
-			else if (type == typeof(UInt32))
-				w.Write("uint32_t");
-			else if (type == typeof(UInt64))
-				w.Write("uint64_t");
-			else if (type == typeof(int))
-				w.Write("int");
-			else if (type == typeof(uint))
-				w.Write("unsigned int");
-			else if (type == typeof(byte))
-				w.Write("unsigned char");
-			else if (type == typeof(ulong))
-				w.Write("unsigned long");
-			else if (type == typeof(string))
-				w.Write("const wchar_t * ");
-			else if (type.IsEnum)
-				w.Write(type.Name);
-			else
-				w.Write("??unknown??");
-
-			if (parameterType.IsArray) {
-				w.Write("*");
-			}
         }
 
         private void GenerateEnum(Type enumeration, TextWriter w)

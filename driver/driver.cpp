@@ -12,10 +12,14 @@
 
 
 using namespace std;
+
+#ifdef TEST_LLVM
 using namespace llvm;
+#endif
 
 IFactory *f;
 
+#ifdef TEST_LLVM
 MCInstance::MCInstance(Triple Triple){
 	this->TT = Triple;
 	this->TheTarget = TargetRegistry::lookupTarget(this->TT.getTriple(), this->LastError);
@@ -74,6 +78,7 @@ void SendMCAsmInfo();
 void SendSubTargetInfo();
 void SendMCInst(const MCInst& inst);
 void SendMCOperand(const MCOperand& opnd);
+
 
 void SendSubTargetInfo(){
 	Reko::Send(MSG_SUBTGT_START);
@@ -174,13 +179,33 @@ void SendMCInst(const MCInst &instr){
 
 	Reko::Send(MSG_OP_END);
 }
+#endif
 
 extern "C"
 {	
-	EXPORT void Initialize(IFactory *f){
+	EXPORT(void) Initialize(IFactory *f){
 		::f = f;
 	}
 
+	PACK(struct dummy {
+		int foo1;
+		int foo2;
+	});
+
+	void typeCB(void *type) {
+		struct dummy *c = (struct dummy *)type;
+		printf("Pointer is %p\n", c);
+		printf("int1 is %d\n", c->foo1);
+		printf("int2 is %d\n", c->foo2);
+	}
+
+	EXPORT(void) TestTypes() {
+		// test types
+		f->GetType(L"Interop.DummyTest", typeCB);
+	}
+
+
+#ifdef TEST_LLVM
 	EXPORT void SetupTarget(const char *TripleName){
 		InitializeAllTargetInfos();
 		InitializeAllTargets();
@@ -226,4 +251,5 @@ extern "C"
 			}
 		}
 	}
+#endif
 }

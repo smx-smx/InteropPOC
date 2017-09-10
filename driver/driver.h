@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 
+#ifdef TEST_LLVM
 #include <llvm/MC/MCAsmInfo.h>
 #include <llvm/MC/MCContext.h>
 //#include <llvm/MC/MCDisassembler.h>
@@ -56,6 +57,7 @@ public:
 		delete this->TheTarget;
 	}
 };
+#endif
 
 #endif /* DRIVER_H */
 
